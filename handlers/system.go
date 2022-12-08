@@ -62,6 +62,10 @@ func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	// engineSystem.RegisterCallBack(c.getCallBack())
 
 	c.srv = &services.SystemServer{}
+	c.srv.PreImplementServer = &services.SysteImplmenetServer{}
+	c.srv.NeedImpInit = c.srv.PreImplementServer
+	c.srv.NeedImpCfg = c.srv.PreImplementServer
+
 	systempb.RegisterConfigurationServiceServer(grpcSrvConn, c.srv)
 	systempb.RegisterRunServicesServer(grpcSrvConn, c.srv)
 	systempb.RegisterInternalServicesServer(grpcSrvConn, c.srv)
