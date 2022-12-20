@@ -3,6 +3,7 @@ package hal
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	commonpb "github.com/Intrising/intri-type/common"
 	eventpb "github.com/Intrising/intri-type/event"
@@ -17,20 +18,24 @@ type EventClient struct {
 }
 
 func EventClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOptions) *EventClient {
+	fmt.Println("EventClientInit : enter")
+	defer fmt.Println("EventClientInit : leave")
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_EVENT)
+
+	unions := []*eventpb.InternalTypeUnionEntry{
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SYSTEM},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_NTP},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BOOT},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE},
+	}
+
+	required := []commonpb.ServicesEnumTypeOptions{}
+
 	return &EventClient{
-		Ctx: ctx,
-		InternalClient: utilsEvent.NewEventInternal(ctx, service,
-			[]eventpb.InternalTypeOptions{eventpb.InternalTypeOptions_INTERNAL_TYPE_SYSTEM,
-				eventpb.InternalTypeOptions_INTERNAL_TYPE_MAINTENANCE,
-				eventpb.InternalTypeOptions_INTERNAL_TYPE_NTP,
-				eventpb.InternalTypeOptions_INTERNAL_TYPE_BOOT,
-				eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON,
-				eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE,
-			},
-			eventpb.ListenTypeOptions_LISTEN_TYPE_BOTH,
-		),
-		Client: eventpb.NewEventClient(client.GetGrpcClient()),
+		Ctx:            ctx,
+		InternalClient: utilsEvent.NewEventInternal(ctx, service, unions, required),
+		Client:         eventpb.NewEventClient(client.GetGrpcClient()),
 	}
 }
 
@@ -43,7 +48,8 @@ func (c *EventClient) ReceiveEvent() (*eventpb.Internal, error) {
 }
 
 // SendEvent :
-func (c *EventClient) SendEvent(evt *eventpb.Internal, opt string) {
+func (c *EventClient) SendEvent(evt *eventpb.Internal) {
+	fmt.Println("SendEvent : ", evt)
 	// if opt == commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_NETWORK.String() {
 	// 	if networkEventClient == nil {
 	// 		networkEventClient = utilsEvent.NewEventInternal(halCtx, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_NETWORK,
@@ -61,6 +67,10 @@ func (c *EventClient) SendEvent(evt *eventpb.Internal, opt string) {
 	// 	}
 	// 	timeEventClient.SendEvent(evt)
 	// } else {
+	fmt.Println("c = ", c)
+	fmt.Println("Client = ", c.Client)
+	fmt.Println("c.InternalClient = ", c.InternalClient == nil)
+
 	if c.InternalClient != nil {
 		c.InternalClient.SendEvent(evt)
 	}

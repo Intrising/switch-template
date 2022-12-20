@@ -39,7 +39,7 @@ mod-tidy:
 
 clean:
 	@printf "[_] Clear build files\r"
-	@rm -f ./intri-core
+	@rm -f ./intri-core*
 	@printf "[v] Clear build files\n"
 
 build: main.go clean hide mod-tidy
@@ -53,7 +53,7 @@ intri-core: main.go ./*/*.go
 	$(STRIP) $@
 	@printf "[v] Building binary\n"
 
-intri-core-test:${PWD}/test/
+intri-core-test:${PWD}/testing/
 	@printf "[_] Building binary\r"
 	$(GO_CC) $(GO_OPTS) go test $< -c  -v -o $@  
 	$(STRIP) $@

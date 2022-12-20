@@ -30,19 +30,29 @@ func (c *SystemHandler) getCallBack() *engineSystem.CallBack {
 		Ctx:          c.ctx,
 		EventClient:  hal.EventClientInit(c.ctx, c.service),
 		DeviceClient: hal.DeviceClientInit(c.ctx, c.service),
-		// ConfigClient:   hal.ConfigClientInit(c.ctx, c.service),
 		// HardwareClient: hal.HardwareClientInit(c.ctx, c.service),
 	}
 }
 
-// func (c *SystemHandler) defaultConfig() *systempb.Config {
-// 	return &systempb.Config{
-// 		SysName:     "os5-switch",
-// 		SysLocation: "",
-// 		SysGroup:    "",
-// 		SysContact:  "",
-// 	}
-// }
+func (c *SystemHandler) getDefaultConfig() *systempb.Config {
+	return &systempb.Config{
+		Identification: &systempb.IdentificationSetting{
+			Name:        "test1",
+			Description: "test2",
+			Location:    "test3",
+			Contact:     "test4",
+		},
+		Oob: &systempb.OOBServicePortSetting{
+			IPv4: &systempb.OOBServicePortNetworkSetting{
+				Enabled: false,
+				IPAddr:  "",
+				Netmask: "",
+			},
+		},
+		Watchdog: &systempb.WatchDogSetting{},
+		Logout:   &systempb.AutoLogoutSetting{},
+	}
+}
 
 // func (c *SystemHandler) getConfig() {
 // 	c.configClient = hal.ConfigClientInit(c.ctx, c.service)
@@ -59,16 +69,17 @@ func (c *SystemHandler) getCallBack() *engineSystem.CallBack {
 func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	c.ctx = ctx
 	c.service = commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
-	// engineSystem.RegisterCallBack(c.getCallBack())
+	cb := c.getCallBack()
+	engineSystem.RegisterCallBack(cb, nil)
 
-	c.srv = &services.SystemServer{}
-	c.srv.PreImplementServer = &services.SysteImplmenetServer{}
-	c.srv.NeedImpInit = c.srv.PreImplementServer
-	c.srv.NeedImpCfg = c.srv.PreImplementServer
+	c.srv = &services.SystemServer{
+		Cfg:         c.getDefaultConfig(),
+		EventClient: cb.EventClient.(*hal.EventClient),
+	}
 
-	systempb.RegisterConfigurationServiceServer(grpcSrvConn, c.srv)
-	systempb.RegisterRunServicesServer(grpcSrvConn, c.srv)
-	systempb.RegisterInternalServicesServer(grpcSrvConn, c.srv)
+	systempb.RegisterConfigServiceServer(grpcSrvConn, c.srv)
+	systempb.RegisterRunServer(grpcSrvConn, c.srv)
+	systempb.RegisterInternalServer(grpcSrvConn, c.srv)
 }
 
 func init() {

@@ -11,7 +11,7 @@ import (
 
 type DeviceClient struct {
 	Ctx    context.Context
-	Client devicepb.DeviceClient
+	Client devicepb.RunClient
 	Value  struct {
 		deviceInfo *devicepb.Info
 		pathAll    *devicepb.PathAll
@@ -23,13 +23,13 @@ func DeviceClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOpti
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_DEVICE)
 	return &DeviceClient{
 		Ctx:    ctx,
-		Client: devicepb.NewDeviceClient(client.GetGrpcClient()),
+		Client: devicepb.NewRunClient(client.GetGrpcClient()),
 	}
 }
 
 func (c *DeviceClient) getBoundary() {
 	for {
-		if val, err := c.Client.GetBoundary(c.Ctx, empty); err != nil {
+		if val, err := c.Client.GetInfoBoundary(c.Ctx, empty); err != nil {
 			continue
 		} else {
 			c.Value.boundary = val
@@ -40,7 +40,7 @@ func (c *DeviceClient) getBoundary() {
 
 func (c *DeviceClient) getPath() {
 	for {
-		if val, err := c.Client.GetPath(c.Ctx, empty); err != nil {
+		if val, err := c.Client.GetInfoPath(c.Ctx, empty); err != nil {
 			continue
 		} else {
 			c.Value.pathAll = val
@@ -51,7 +51,7 @@ func (c *DeviceClient) getPath() {
 
 func (c *DeviceClient) getDeviceInfo() {
 	for {
-		if val, err := c.Client.GetDeviceInfo(c.Ctx, empty); err != nil {
+		if val, err := c.Client.GetInfoDevice(c.Ctx, empty); err != nil {
 			continue
 		} else {
 			c.Value.deviceInfo = val

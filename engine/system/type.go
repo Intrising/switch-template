@@ -3,7 +3,6 @@ package system
 import (
 	"context"
 
-	commonpb "github.com/Intrising/intri-type/common"
 	// configpb "github.com/Intrising/intri-type/config"
 	devicepb "github.com/Intrising/intri-type/device"
 	// errorpb "github.com/Intrising/intri-type/error"
@@ -16,7 +15,7 @@ type CallBack struct {
 
 	// event
 	EventClient interface {
-		SendEvent(*eventpb.Internal, string)
+		SendEvent(*eventpb.Internal)
 	}
 
 	// config
@@ -32,7 +31,7 @@ type CallBack struct {
 
 	// hardware
 	HardwareClient interface {
-		GetResetButtonStatus() (*commonpb.State, error)
+		// GetResetButtonStatus() (*commonpb.BoolValue, error)
 		// SetSystemLED(*hwpb.LEDType) (*emptypb.Empty, error)
 	}
 }
