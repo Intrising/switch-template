@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Intrising/intri-core/hal"
 	"github.com/Intrising/intri-core/services"
@@ -29,10 +30,6 @@ type SystemHandler struct {
 	cfg *systempb.Config
 	srv *services.SystemServer
 	cb  *engineSystem.CallBack
-}
-
-func (c *SystemHandler) GetRegisteredMainService() commonpb.ServicesEnumTypeOptions {
-	return commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
 }
 
 func (c *SystemHandler) getCallBack() {
@@ -124,7 +121,7 @@ func (c *SystemHandler) initConfig() {
 	c.initReady = true
 
 	c.getConfig()
-	engineSystem.RegisterCallBack(c.cb, c.cfg)
+	engineSystem.Init(c.cb, c.cfg)
 	c.srv.InitConfig(c.cfg)
 }
 
@@ -149,6 +146,25 @@ func (c *SystemHandler) listenEvent() {
 	}
 }
 
+func (s *SystemHandler) sendReadyEvent() {
+	evt := &eventpb.Internal{
+		Ts:      timestamppb.Now(),
+		Type:    eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE,
+		Message: s.service.String() + eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START.String(),
+		Parameter: &eventpb.Internal_Init{
+			Init: &eventpb.ServiceInitialized{
+				ServiceType: s.service,
+				Action:      eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START,
+			},
+		},
+	}
+	s.cb.EventClient.SendEvent(evt)
+}
+
+func (c *SystemHandler) GetRegisteredMainService() commonpb.ServicesEnumTypeOptions {
+	return commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
+}
+
 func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	c.ctx = ctx
 	c.service = c.GetRegisteredMainService()
@@ -160,7 +176,6 @@ func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 
 	systempb.RegisterConfigServiceServer(grpcSrvConn, c.srv)
 	systempb.RegisterRunServiceServer(grpcSrvConn, c.srv)
-	systempb.RegisterInternalServiceServer(grpcSrvConn, c.srv)
 
 	go c.listenEvent()
 }

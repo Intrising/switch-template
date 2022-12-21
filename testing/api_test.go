@@ -18,9 +18,8 @@ import (
 )
 
 var (
-	systemClient   systempb.ConfigServiceClient
-	runClient      systempb.RunServiceClient
-	internalClient systempb.InternalServiceClient
+	systemClient systempb.ConfigServiceClient
+	runClient    systempb.RunServiceClient
 
 	eventClient *utilsEvent.EventInternal
 
@@ -136,6 +135,6 @@ func init() {
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM)
 	systemClient = systempb.NewConfigServiceClient(client.GetGrpcClient())
 	runClient = systempb.NewRunServiceClient(client.GetGrpcClient())
-	internalClient = systempb.NewInternalServiceClient(client.GetGrpcClient())
+	// internalClient = systempb.NewInternalServiceClient(client.GetGrpcClient())
 	eventClient = utilsEvent.NewEventInternal(ctx, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM, []*eventpb.InternalTypeUnionEntry{}, []commonpb.ServicesEnumTypeOptions{})
 }

@@ -9,8 +9,8 @@ import (
 	eventpb "github.com/Intrising/intri-type/event"
 	utilsLog "github.com/Intrising/intri-utils/log"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -19,7 +19,6 @@ type SystemServer struct {
 	cfg   *systempb.Config
 
 	systempb.UnimplementedConfigServiceServer
-	systempb.UnimplementedInternalServiceServer
 	systempb.UnimplementedRunServiceServer
 
 	EventClient *hal.EventClient
@@ -30,7 +29,7 @@ func (s *SystemServer) InitConfig(in *systempb.Config) {
 }
 
 func (s *SystemServer) sendConfigChange(change proto.Message, adu eventpb.ConfigADUTypeOptions) {
-	data, err := ptypes.MarshalAny(change)
+	data, err := anypb.New(change)
 	if err != nil {
 		utilsLog.Error(err)
 		return

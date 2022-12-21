@@ -19,16 +19,12 @@ type CallBack struct {
 		ReceiveEvent() (*eventpb.Internal, error)
 	}
 
-	// config
-	// ConfigClient interface {
-	// 	RunRestoreDefaultConfig(*configpb.RestoreDefaultType) (*emptypb.Empty, error)
-	// }
-
 	// device
 	DeviceClient interface {
 		GetDeviceInfo() *devicepb.Info
 		GetPath() *devicepb.PathAll
 		GetBoardInfo() *devicepb.BoardInfo
+		GetInfoFunctionControl() *devicepb.FunctionControlAll
 	}
 
 	// hardware

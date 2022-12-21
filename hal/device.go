@@ -11,12 +11,13 @@ import (
 
 type DeviceClient struct {
 	Ctx    context.Context
-	Client devicepb.RunClient
+	Client devicepb.RunServiceClient
 	Value  struct {
 		deviceInfo *devicepb.Info
 		pathAll    *devicepb.PathAll
 		boundary   *devicepb.BoundaryAll
 		boradInfo  *devicepb.BoardInfo
+		fcl        *devicepb.FunctionControlAll
 	}
 }
 
@@ -24,7 +25,18 @@ func DeviceClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOpti
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_DEVICE)
 	return &DeviceClient{
 		Ctx:    ctx,
-		Client: devicepb.NewRunClient(client.GetGrpcClient()),
+		Client: devicepb.NewRunServiceClient(client.GetGrpcClient()),
+	}
+}
+
+func (c *DeviceClient) getFcl() {
+	for {
+		if val, err := c.Client.GetInfoFunctionControl(c.Ctx, empty); err != nil {
+			continue
+		} else {
+			c.Value.fcl = val
+			break
+		}
 	}
 }
 
@@ -70,6 +82,15 @@ func (c *DeviceClient) getDeviceInfo() {
 			break
 		}
 	}
+}
+
+// GetBoundary :
+func (c *DeviceClient) GetInfoFunctionControl() *devicepb.FunctionControlAll {
+	if c.Value.boundary == nil {
+		c.getFcl()
+	}
+
+	return c.Value.fcl
 }
 
 // GetBoundary :

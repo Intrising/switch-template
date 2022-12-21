@@ -1,7 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Intrising/intri-type v0.0.0-20221220092553-48999f5c3899 h1:8ocS3VzPMu/Q002rz5Zv6MiIlc65qXyXkEOM/1Qq2DQ=
-github.com/Intrising/intri-type v0.0.0-20221220092553-48999f5c3899/go.mod h1:S87ztPOGjPMpmfUXDS/qyJbSMjepvFzEO1GhxgVrbD0=
+github.com/Intrising/intri-type v0.0.0-20221221080005-5f1b5dd57a9d h1:phW0g2uh1bSmwJx7VRZ9eOsC0ALqcC9nyGLxLHVkWz0=
+github.com/Intrising/intri-type v0.0.0-20221221080005-5f1b5dd57a9d/go.mod h1:S87ztPOGjPMpmfUXDS/qyJbSMjepvFzEO1GhxgVrbD0=
 github.com/Intrising/intri-utils v0.0.0-20221220070400-8e67a5e2ea8b h1:mTkMBOda6K31CsaLWRNRIzHvAznNUAGJwRP4qVK0RP8=
 github.com/Intrising/intri-utils v0.0.0-20221220070400-8e67a5e2ea8b/go.mod h1:G56lY4NyGBvpwezEnh9sIFIQi96sCLjF7ph5vn1kwxE=
 github.com/Intrising/protoc-gen-proto-rpc v0.0.0-20221201014055-53777e68afaa h1:l5dGxf0VmLavYPif7zmCMTlg6+D931rmixtOyMS/JvQ=

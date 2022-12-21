@@ -453,16 +453,14 @@ func (s *SystemServer) SetConfigLogout(ctx context.Context, in *systempb.AutoLog
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
-	err := engineSystem.SetAutoLogout(in)
-	if err == nil {
-		s.SetConfigLogoutEnabled(ctx, &systempb.ConfigLogoutEnabled{Value: in.GetEnabled()})
-		s.SetConfigLogoutLogoutTime(ctx, &systempb.ConfigLogoutLogoutTime{Value: in.GetLogoutTime()})
-		if !proto.Equal(s.cfg.GetLogout(), in) {
-			s.cfg.Logout = proto.Clone(in).(*systempb.AutoLogoutSetting)
-			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
-		}
+	s.SetConfigLogoutEnabled(ctx, &systempb.ConfigLogoutEnabled{Value: in.GetEnabled()})
+	s.SetConfigLogoutLogoutTime(ctx, &systempb.ConfigLogoutLogoutTime{Value: in.GetLogoutTime()})
+	if !proto.Equal(s.cfg.GetLogout(), in) {
+		s.cfg.Logout = proto.Clone(in).(*systempb.AutoLogoutSetting)
+		defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 	}
-	return empty, err
+
+	return empty, nil
 }
 
 func (s *SystemServer) GetConfigLogoutEnabled(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigLogoutEnabled, error) {
