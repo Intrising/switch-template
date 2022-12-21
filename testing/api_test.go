@@ -8,16 +8,42 @@ import (
 
 	commonpb "github.com/Intrising/intri-type/common"
 	systempb "github.com/Intrising/intri-type/core/system"
+	eventpb "github.com/Intrising/intri-type/event"
+
+	utilsEvent "github.com/Intrising/intri-utils/event"
 	utilsRpc "github.com/Intrising/intri-utils/rpc"
+
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
 	systemClient   systempb.ConfigServiceClient
-	runClient      systempb.RunClient
-	internalClient systempb.InternalClient
-	service        = commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
+	runClient      systempb.RunServiceClient
+	internalClient systempb.InternalServiceClient
+
+	eventClient *utilsEvent.EventInternal
+
+	service = commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
 )
+
+func Test_SendEventInit(t *testing.T) {
+	in := service
+	evt := &eventpb.Internal{
+		Ts:           timestamppb.Now(),
+		Type:         eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE,
+		ServicesType: in,
+		Message:      "The service can start doing initialization",
+		LoggingType:  eventpb.LoggingTypeOptions_LOGGING_TYPE_NONE,
+		Parameter: &eventpb.Internal_Init{
+			Init: &eventpb.ServiceInitialized{
+				ServiceType: in,
+				Action:      eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_INIT,
+			},
+		},
+	}
+	eventClient.SendEvent(evt)
+}
 
 func Test_SetConfigIdentification(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
@@ -85,10 +111,31 @@ func Test_SetConfigLogoutLogoutTime(t *testing.T) {
 	log.Println("Response from GetConfigLogoutLogoutTime:", res2)
 }
 
+func Test_SendSaveConfigEvent(t *testing.T) {
+	log.Println("Test_SendSaveConfigEvent")
+	defer log.Println("Test_SendSaveConfigEvent leave")
+	evt := &eventpb.Internal{
+		Ts:           timestamppb.Now(),
+		Type:         eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG,
+		ServicesType: commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CONFIG,
+		Message:      "save config",
+		LoggingType:  eventpb.LoggingTypeOptions_LOGGING_TYPE_NONE,
+		Parameter: &eventpb.Internal_Config{
+			Config: &eventpb.ConfigParameter{
+				ActionOption: eventpb.ConfigActionTypeOptions_CONFIG_ACTION_TYPE_CONFIG_SAVE,
+			},
+		},
+	}
+	eventClient.SendEvent(evt)
+
+	time.Sleep(time.Second * 10)
+}
+
 func init() {
 	ctx, _ := context.WithCancel(context.Background())
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM)
 	systemClient = systempb.NewConfigServiceClient(client.GetGrpcClient())
-	runClient = systempb.NewRunClient(client.GetGrpcClient())
-	internalClient = systempb.NewInternalClient(client.GetGrpcClient())
+	runClient = systempb.NewRunServiceClient(client.GetGrpcClient())
+	internalClient = systempb.NewInternalServiceClient(client.GetGrpcClient())
+	eventClient = utilsEvent.NewEventInternal(ctx, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM, []*eventpb.InternalTypeUnionEntry{}, []commonpb.ServicesEnumTypeOptions{})
 }

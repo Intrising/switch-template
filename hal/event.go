@@ -17,20 +17,10 @@ type EventClient struct {
 	InternalClient *utilsEvent.EventInternal
 }
 
-func EventClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOptions) *EventClient {
+func EventClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOptions, unions []*eventpb.InternalTypeUnionEntry, required []commonpb.ServicesEnumTypeOptions) *EventClient {
 	fmt.Println("EventClientInit : enter")
 	defer fmt.Println("EventClientInit : leave")
 	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_EVENT)
-
-	unions := []*eventpb.InternalTypeUnionEntry{
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SYSTEM},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_NTP},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BOOT},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE},
-	}
-
-	required := []commonpb.ServicesEnumTypeOptions{}
 
 	return &EventClient{
 		Ctx:            ctx,
@@ -67,10 +57,6 @@ func (c *EventClient) SendEvent(evt *eventpb.Internal) {
 	// 	}
 	// 	timeEventClient.SendEvent(evt)
 	// } else {
-	fmt.Println("c = ", c)
-	fmt.Println("Client = ", c.Client)
-	fmt.Println("c.InternalClient = ", c.InternalClient == nil)
-
 	if c.InternalClient != nil {
 		c.InternalClient.SendEvent(evt)
 	}

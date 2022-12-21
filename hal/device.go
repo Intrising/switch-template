@@ -16,6 +16,7 @@ type DeviceClient struct {
 		deviceInfo *devicepb.Info
 		pathAll    *devicepb.PathAll
 		boundary   *devicepb.BoundaryAll
+		boradInfo  *devicepb.BoardInfo
 	}
 }
 
@@ -33,6 +34,17 @@ func (c *DeviceClient) getBoundary() {
 			continue
 		} else {
 			c.Value.boundary = val
+			break
+		}
+	}
+}
+
+func (c *DeviceClient) getBoardInfo() {
+	for {
+		if val, err := c.Client.GetInfoBoard(c.Ctx, empty); err != nil {
+			continue
+		} else {
+			c.Value.boradInfo = val
 			break
 		}
 	}
@@ -83,4 +95,12 @@ func (c *DeviceClient) GetPath() *devicepb.PathAll {
 		c.getPath()
 	}
 	return c.Value.pathAll
+}
+
+// GetPath :
+func (c *DeviceClient) GetBoardInfo() *devicepb.BoardInfo {
+	if c.Value.boradInfo == nil {
+		c.getBoardInfo()
+	}
+	return c.Value.boradInfo
 }

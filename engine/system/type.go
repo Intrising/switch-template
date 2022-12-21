@@ -16,6 +16,7 @@ type CallBack struct {
 	// event
 	EventClient interface {
 		SendEvent(*eventpb.Internal)
+		ReceiveEvent() (*eventpb.Internal, error)
 	}
 
 	// config
@@ -27,6 +28,7 @@ type CallBack struct {
 	DeviceClient interface {
 		GetDeviceInfo() *devicepb.Info
 		GetPath() *devicepb.PathAll
+		GetBoardInfo() *devicepb.BoardInfo
 	}
 
 	// hardware

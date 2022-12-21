@@ -2,10 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"reflect"
-	"runtime"
-	"strings"
 
 	commonpb "github.com/Intrising/intri-type/common"
 	utilsLog "github.com/Intrising/intri-utils/log"
@@ -13,27 +10,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-func GetRuntimeFrame(skipIndex int) runtime.Frame {
-	p := make([]uintptr, 1)
-	n := runtime.Callers(skipIndex+2, p)
-	if n > 0 {
-		cframes := runtime.CallersFrames(p[:n])
-		cf, _ := cframes.Next()
-		return cf
-	}
-	return runtime.Frame{File: "unknown.file", Function: "unknown.func", Line: -1}
-}
-
 var (
 	registerHandlerMapping = make(map[commonpb.ServicesEnumTypeOptions][]IHandler)
 )
-
-func registerHandler(h IHandler) {
-	if _, ok := registerHandlerMapping[h.GetRegisteredMainService()]; !ok {
-		registerHandlerMapping[h.GetRegisteredMainService()] = make([]IHandler, 0)
-	}
-	registerHandlerMapping[h.GetRegisteredMainService()] = append(registerHandlerMapping[h.GetRegisteredMainService()], h)
-}
 
 type IHandler interface {
 	GetRegisteredMainService() commonpb.ServicesEnumTypeOptions
@@ -42,23 +21,11 @@ type IHandler interface {
 
 type Handler struct{}
 
-func (c *Handler) debugPanic(parent context.Context, r interface{}) {
-	traceList := make([]string, 0)
-
-	for i := 0; i < 100; i++ {
-		frame := GetRuntimeFrame(i)
-		if frame.Line == -1 {
-			break
-		}
-		traceList = append(traceList, fmt.Sprintf("[recover] trace: %04d file(%s): %s:%d",
-			i,
-			frame.Function,
-			frame.File,
-			frame.Line,
-		))
+func registerHandler(h IHandler) {
+	if _, ok := registerHandlerMapping[h.GetRegisteredMainService()]; !ok {
+		registerHandlerMapping[h.GetRegisteredMainService()] = make([]IHandler, 0)
 	}
-
-	utilsLog.Info("[recover] panic: %#v\n%s", r, strings.Join(traceList, "\n"))
+	registerHandlerMapping[h.GetRegisteredMainService()] = append(registerHandlerMapping[h.GetRegisteredMainService()], h)
 }
 
 func (c *Handler) handleInit(parent context.Context, service commonpb.ServicesEnumTypeOptions, hs []IHandler) {

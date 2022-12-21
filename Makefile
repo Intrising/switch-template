@@ -13,7 +13,7 @@ GO_CC                 = CC=$(CC)
 GO_OPTS               = CGO_ENABLED=1 GOARCH=arm64 GOOS=linux
 # GO_OPTS               = GOARCH=arm64 GOARM=8 GOOS=linux
 
-all: intri-core
+all: intri-core intri-core-test
 
 tag:
 	@git describe --tags --abbrev=0 | awk -F. '{OFS="."; $$NF+=1; print $$0}' | xargs -t -I % sh -c 'git tag %'
