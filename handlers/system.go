@@ -12,10 +12,9 @@ import (
 	"github.com/Intrising/intri-core/hal"
 	"github.com/Intrising/intri-core/services"
 
-	engineSystem "github.com/Intrising/intri-core/engine/system"
+	system "github.com/Intrising/intri-core/engine/system"
 
 	utilsLog "github.com/Intrising/intri-utils/log"
-	utilsMisc "github.com/Intrising/intri-utils/misc"
 
 	commonpb "github.com/Intrising/intri-type/common"
 	systempb "github.com/Intrising/intri-type/core/system"
@@ -27,9 +26,11 @@ type SystemHandler struct {
 	ctx       context.Context
 	service   commonpb.ServicesEnumTypeOptions
 
+	configClient *hal.ConfigClient
+
 	cfg *systempb.Config
 	srv *services.SystemServer
-	cb  *engineSystem.CallBack
+	cb  *system.CallBack
 }
 
 func (c *SystemHandler) getCallBack() {
@@ -46,7 +47,7 @@ func (c *SystemHandler) getCallBack() {
 
 	required := []commonpb.ServicesEnumTypeOptions{}
 
-	c.cb = &engineSystem.CallBack{
+	c.cb = &system.CallBack{
 		Ctx:          c.ctx,
 		EventClient:  hal.EventClientInit(c.ctx, c.service, unions, required),
 		DeviceClient: hal.DeviceClientInit(c.ctx, c.service),
@@ -82,33 +83,36 @@ func (c *SystemHandler) getDefaultConfig() *systempb.Config {
 	}
 }
 
-func (c *SystemHandler) saveConfig(in *systempb.Config, path string) {
-	fmt.Println("saveConfig : enter = ", path, in)
-	filePath := path + c.service.String() + ".yml"
+func (c *SystemHandler) saveConfig(in *systempb.Config) {
+	fmt.Println("saveConfig : enter = ", in)
 	cfg := proto.Clone(in).(*systempb.Config)
-	utilsMisc.SaveProtoMessageToFile(cfg, filePath)
+	c.configClient.SaveSavedConfig(cfg)
 }
 
-func (c *SystemHandler) loadSaveConfig(path string) (*systempb.Config, error) {
-	filePath := path + c.service.String() + ".yml"
+func (c *SystemHandler) saveDefaultConfig(in *systempb.Config) {
+	fmt.Println("saveConfig : enter = ", in)
+	cfg := proto.Clone(in).(*systempb.Config)
+	c.configClient.SaveDefaultConfig(cfg)
+}
+
+func (c *SystemHandler) loadSaveConfig() (*systempb.Config, error) {
 	out := &systempb.Config{}
-	err := utilsMisc.LoadProtoMessageFromFile(out, filePath)
-	return out, err
+	c.configClient.LoadSavedConfig(out)
+	return out, nil
 }
 
 func (c *SystemHandler) getConfig() {
 	defaultCfg := c.getDefaultConfig()
-	path := c.cb.DeviceClient.GetPath()
 
 	// save default config
-	c.saveConfig(defaultCfg, path.GetConfigDefault())
+	c.saveDefaultConfig(defaultCfg)
 
 	var err error
 	// load save config
-	c.cfg, err = c.loadSaveConfig(path.GetConfigSaved())
+	c.cfg, err = c.loadSaveConfig()
 	if err != nil {
 		// save default config to saved
-		c.saveConfig(defaultCfg, path.GetConfigSaved())
+		c.saveConfig(defaultCfg)
 		c.cfg = proto.Clone(defaultCfg).(*systempb.Config)
 	}
 }
@@ -121,7 +125,7 @@ func (c *SystemHandler) initConfig() {
 	c.initReady = true
 
 	c.getConfig()
-	engineSystem.Init(c.cb, c.cfg)
+	system.Init(c.cb, c.cfg)
 	c.srv.InitConfig(c.cfg)
 }
 
@@ -140,7 +144,7 @@ func (c *SystemHandler) listenEvent() {
 			c.initConfig()
 		case eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG:
 			if evt.GetConfig().GetActionOption() == eventpb.ConfigActionTypeOptions_CONFIG_ACTION_TYPE_CONFIG_SAVE {
-				c.saveConfig(c.cfg, c.cb.DeviceClient.GetPath().GetConfigSaved())
+				c.saveConfig(c.cfg)
 			}
 		}
 	}
@@ -169,6 +173,11 @@ func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	c.ctx = ctx
 	c.service = c.GetRegisteredMainService()
 	c.getCallBack()
+
+	c.configClient = &hal.ConfigClient{
+		SavedPath:   fmt.Sprintf("%s/%s.yml", c.cb.DeviceClient.GetPath().GetConfigSaved(), c.GetRegisteredMainService().String()),
+		DefaultPath: fmt.Sprintf("%s/%s.yml", c.cb.DeviceClient.GetPath().GetConfigDefault(), c.GetRegisteredMainService().String()),
+	}
 
 	c.srv = &services.SystemServer{
 		EventClient: c.cb.EventClient.(*hal.EventClient),
