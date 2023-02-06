@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -84,21 +85,19 @@ func (c *SystemHandler) getDefaultConfig() *systempb.Config {
 }
 
 func (c *SystemHandler) saveConfig(in *systempb.Config) {
-	fmt.Println("saveConfig : enter = ", in)
 	cfg := proto.Clone(in).(*systempb.Config)
 	c.configClient.SaveSavedConfig(cfg)
 }
 
 func (c *SystemHandler) saveDefaultConfig(in *systempb.Config) {
-	fmt.Println("saveConfig : enter = ", in)
 	cfg := proto.Clone(in).(*systempb.Config)
 	c.configClient.SaveDefaultConfig(cfg)
 }
 
 func (c *SystemHandler) loadSaveConfig() (*systempb.Config, error) {
 	out := &systempb.Config{}
-	c.configClient.LoadSavedConfig(out)
-	return out, nil
+	err := c.configClient.LoadSavedConfig(out)
+	return out, err
 }
 
 func (c *SystemHandler) getConfig() {
@@ -111,6 +110,7 @@ func (c *SystemHandler) getConfig() {
 	// load save config
 	c.cfg, err = c.loadSaveConfig()
 	if err != nil {
+		log.Println("err = ", err)
 		// save default config to saved
 		c.saveConfig(defaultCfg)
 		c.cfg = proto.Clone(defaultCfg).(*systempb.Config)
@@ -119,7 +119,7 @@ func (c *SystemHandler) getConfig() {
 
 func (c *SystemHandler) initConfig() {
 	if c.initReady {
-		utilsLog.Info("init conifg ready")
+		// utilsLog.Info("init conifg ready")
 		return
 	}
 	c.initReady = true
@@ -133,7 +133,6 @@ func (c *SystemHandler) listenEvent() {
 	utilsLog.Info("listenEvent : enter")
 	for {
 		evt, err := c.cb.EventClient.ReceiveEvent()
-		fmt.Println(evt, err)
 		if err != nil {
 			time.Sleep(time.Second * 1)
 			continue

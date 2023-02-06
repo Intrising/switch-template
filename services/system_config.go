@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	"log"
 
-	engineSystem "github.com/Intrising/intri-core/engine/system"
+	system "github.com/Intrising/intri-core/engine/system"
 
 	systempb "github.com/Intrising/intri-type/core/system"
 	eventpb "github.com/Intrising/intri-type/event"
@@ -210,12 +211,14 @@ func (s *SystemServer) GetConfigOob(ctx context.Context, in *emptypb.Empty) (*sy
 }
 
 func (s *SystemServer) SetConfigOob(ctx context.Context, in *systempb.OOBServicePortSetting) (*emptypb.Empty, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
+	if !utilsMisc.IsCtxPassLock(ctx) {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+		if s.cfg == nil {
+			return empty, errConfigNotReady
+		}
+		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
-	ctx = utilsMisc.AddCtxPassLock(ctx)
 
 	return s.SetConfigOobIPv4(ctx, in.GetIPv4())
 }
@@ -239,7 +242,7 @@ func (s *SystemServer) SetConfigOobIPv4(ctx context.Context, in *systempb.OOBSer
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
-	err := engineSystem.SetOOBIPv4(in)
+	err := system.SetOOBIPv4(in)
 	if err == nil {
 		s.SetConfigOobIPv4Enabled(ctx, &systempb.ConfigOobIPv4Enabled{Value: in.GetEnabled()})
 		s.SetConfigOobIPv4IPAddr(ctx, &systempb.ConfigOobIPv4IPAddr{Value: in.GetIPAddr()})
@@ -361,7 +364,7 @@ func (s *SystemServer) SetConfigWatchdog(ctx context.Context, in *systempb.Watch
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
-	err := engineSystem.SetWatchdog(in)
+	err := system.SetWatchdog(in)
 	if err == nil {
 		s.SetConfigWatchdogEnabled(ctx, &systempb.ConfigWatchdogEnabled{Value: in.GetEnabled()})
 		s.SetConfigWatchdogTriggerTime(ctx, &systempb.ConfigWatchdogTriggerTime{Value: in.GetTriggerTime()})
@@ -517,7 +520,9 @@ func (s *SystemServer) SetConfigLogoutLogoutTime(ctx context.Context, in *system
 	}
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
+	log.Println("SetConfigLogoutLogoutTime : ", s.cfg.GetLogout())
 	cfg := proto.Clone(s.cfg.GetLogout()).(*systempb.AutoLogoutSetting)
+	log.Println("cfg = ", cfg)
 	cfg.LogoutTime = in.GetValue()
 	_, err := s.SetConfigLogout(ctx, cfg)
 	return empty, err
