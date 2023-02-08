@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 
 	system "github.com/Intrising/intri-core/engine/system"
 
@@ -520,9 +519,7 @@ func (s *SystemServer) SetConfigLogoutLogoutTime(ctx context.Context, in *system
 	}
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	log.Println("SetConfigLogoutLogoutTime : ", s.cfg.GetLogout())
 	cfg := proto.Clone(s.cfg.GetLogout()).(*systempb.AutoLogoutSetting)
-	log.Println("cfg = ", cfg)
 	cfg.LogoutTime = in.GetValue()
 	_, err := s.SetConfigLogout(ctx, cfg)
 	return empty, err

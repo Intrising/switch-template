@@ -5,7 +5,7 @@ go 1.19
 // replace github.com/Intrising/intri-utils => /home/khkh/working/switch-os5/intri-utils
 
 require (
-	github.com/Intrising/intri-type v0.0.0-20230206021056-9fa3eb0da15f
+	github.com/Intrising/intri-type v0.0.0-20230208035211-3daaf9766ee9
 	github.com/Intrising/intri-utils v0.0.0-20230201172743-79032fdab90c
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1

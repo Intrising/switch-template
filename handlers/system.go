@@ -13,7 +13,7 @@ import (
 	"github.com/Intrising/intri-core/hal"
 	"github.com/Intrising/intri-core/services"
 
-	system "github.com/Intrising/intri-core/engine/system"
+	engineSystem "github.com/Intrising/intri-core/engine/system"
 
 	utilsLog "github.com/Intrising/intri-utils/log"
 
@@ -28,30 +28,19 @@ type SystemHandler struct {
 	service   commonpb.ServicesEnumTypeOptions
 
 	configClient *hal.ConfigClient
+	eventClient  *hal.EventClient
+	deviceClient *hal.DeviceClient
 
 	cfg *systempb.Config
 	srv *services.SystemServer
-	cb  *system.CallBack
+	cb  *engineSystem.CallBack
 }
 
-func (c *SystemHandler) getCallBack() {
-	unions := []*eventpb.InternalTypeUnionEntry{
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SYSTEM},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_NTP},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BOOT},
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON},
-		// init event
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE, ServicesType: c.service},
-		// save config event
-		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG, ServicesType: commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CONFIG},
-	}
-
-	required := []commonpb.ServicesEnumTypeOptions{}
-
-	c.cb = &system.CallBack{
+func (c *SystemHandler) registerCallBack() {
+	c.cb = &engineSystem.CallBack{
 		Ctx:          c.ctx,
-		EventClient:  hal.EventClientInit(c.ctx, c.service, unions, required),
-		DeviceClient: hal.DeviceClientInit(c.ctx, c.service),
+		EventClient:  c.eventClient,
+		DeviceClient: c.deviceClient,
 		// HardwareClient: hal.HardwareClientInit(c.ctx, c.service),
 	}
 }
@@ -125,14 +114,14 @@ func (c *SystemHandler) initConfig() {
 	c.initReady = true
 
 	c.getConfig()
-	system.Init(c.cb, c.cfg)
+	engineSystem.Init(c.cb, c.cfg)
 	c.srv.InitConfig(c.cfg)
 }
 
 func (c *SystemHandler) listenEvent() {
 	utilsLog.Info("listenEvent : enter")
 	for {
-		evt, err := c.cb.EventClient.ReceiveEvent()
+		evt, err := c.eventClient.ReceiveEvent()
 		if err != nil {
 			time.Sleep(time.Second * 1)
 			continue
@@ -149,37 +138,57 @@ func (c *SystemHandler) listenEvent() {
 	}
 }
 
-func (s *SystemHandler) sendReadyEvent() {
+func (c *SystemHandler) sendReadyEvent() {
 	evt := &eventpb.Internal{
 		Ts:      timestamppb.Now(),
 		Type:    eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE,
-		Message: s.service.String() + eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START.String(),
+		Message: c.service.String() + eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START.String(),
 		Parameter: &eventpb.Internal_Init{
 			Init: &eventpb.ServiceInitialized{
-				ServiceType: s.service,
+				ServiceType: c.service,
 				Action:      eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START,
 			},
 		},
 	}
-	s.cb.EventClient.SendEvent(evt)
+	c.eventClient.SendEvent(evt)
 }
 
 func (c *SystemHandler) GetRegisteredMainService() commonpb.ServicesEnumTypeOptions {
 	return commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CORE_SYSTEM
 }
 
+func (c *SystemHandler) initClient() {
+	unions := []*eventpb.InternalTypeUnionEntry{
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SYSTEM},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_NTP},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BOOT},
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON},
+		// init event
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE, ServicesType: c.service},
+		// save config event
+		{Option: eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG, ServicesType: commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CONFIG},
+	}
+
+	required := []commonpb.ServicesEnumTypeOptions{}
+	c.eventClient = hal.EventClientInit(c.ctx, c.service, unions, required)
+	c.deviceClient = hal.DeviceClientInit(c.ctx, c.service)
+
+	c.configClient = &hal.ConfigClient{
+		SavedPath:   fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigSaved(), c.GetRegisteredMainService().String()),
+		DefaultPath: fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigDefault(), c.GetRegisteredMainService().String()),
+	}
+}
+
 func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	c.ctx = ctx
 	c.service = c.GetRegisteredMainService()
-	c.getCallBack()
+	log.Println("Init : c.service = ", c.service)
 
-	c.configClient = &hal.ConfigClient{
-		SavedPath:   fmt.Sprintf("%s/%s.yml", c.cb.DeviceClient.GetPath().GetConfigSaved(), c.GetRegisteredMainService().String()),
-		DefaultPath: fmt.Sprintf("%s/%s.yml", c.cb.DeviceClient.GetPath().GetConfigDefault(), c.GetRegisteredMainService().String()),
-	}
+	c.initClient()
+	c.registerCallBack()
 
 	c.srv = &services.SystemServer{
-		EventClient: c.cb.EventClient.(*hal.EventClient),
+		EventClient: c.eventClient,
 	}
 
 	systempb.RegisterConfigServiceServer(grpcSrvConn, c.srv)

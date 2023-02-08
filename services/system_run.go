@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	engineSystem "github.com/Intrising/intri-core/engine/system"
+	system "github.com/Intrising/intri-core/engine/system"
 
 	systempb "github.com/Intrising/intri-type/core/system"
 
@@ -11,5 +11,5 @@ import (
 )
 
 func (s *SystemServer) GetInfo(ctx context.Context, in *emptypb.Empty) (*systempb.Info, error) {
-	return engineSystem.GetInfo(), nil
+	return system.GetInfo(), nil
 }
