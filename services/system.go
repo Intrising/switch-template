@@ -16,16 +16,12 @@ import (
 
 type SystemServer struct {
 	mutex sync.RWMutex
-	cfg   *systempb.Config
+	Cfg   *systempb.Config
 
 	systempb.UnimplementedConfigServiceServer
 	systempb.UnimplementedRunServiceServer
 
 	EventClient *hal.EventClient
-}
-
-func (s *SystemServer) InitConfig(in *systempb.Config) {
-	s.cfg = in
 }
 
 func (s *SystemServer) sendConfigChange(change proto.Message, adu eventpb.ConfigADUTypeOptions) {

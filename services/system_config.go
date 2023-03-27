@@ -17,19 +17,15 @@ import (
 func (s *SystemServer) GetConfig(ctx context.Context, in *emptypb.Empty) (*systempb.Config, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg).(*systempb.Config), nil
+
+	return proto.Clone(s.Cfg).(*systempb.Config), nil
 }
 
 func (s *SystemServer) SetConfig(ctx context.Context, in *systempb.Config) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
@@ -52,19 +48,15 @@ func (s *SystemServer) SetConfig(ctx context.Context, in *systempb.Config) (*emp
 func (s *SystemServer) GetConfigIdentification(ctx context.Context, in *emptypb.Empty) (*systempb.IdentificationSetting, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg.GetIdentification()).(*systempb.IdentificationSetting), nil
+
+	return proto.Clone(s.Cfg.GetIdentification()).(*systempb.IdentificationSetting), nil
 }
 
 func (s *SystemServer) SetConfigIdentification(ctx context.Context, in *systempb.IdentificationSetting) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
@@ -72,8 +64,8 @@ func (s *SystemServer) SetConfigIdentification(ctx context.Context, in *systempb
 	s.SetConfigIdentificationDescription(ctx, &systempb.ConfigIdentificationDescription{Value: in.GetName()})
 	s.SetConfigIdentificationLocation(ctx, &systempb.ConfigIdentificationLocation{Value: in.GetName()})
 	s.SetConfigIdentificationContact(ctx, &systempb.ConfigIdentificationContact{Value: in.GetName()})
-	if !proto.Equal(s.cfg.GetIdentification(), in) {
-		s.cfg.Identification = proto.Clone(in).(*systempb.IdentificationSetting)
+	if !proto.Equal(s.Cfg.GetIdentification(), in) {
+		s.Cfg.Identification = proto.Clone(in).(*systempb.IdentificationSetting)
 		defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 	}
 
@@ -83,15 +75,13 @@ func (s *SystemServer) SetConfigIdentification(ctx context.Context, in *systempb
 func (s *SystemServer) GetConfigIdentificationName(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigIdentificationName, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigIdentificationName{Value: s.cfg.GetIdentification().GetName()}, nil
+
+	return &systempb.ConfigIdentificationName{Value: s.Cfg.GetIdentification().GetName()}, nil
 }
 
 func (s *SystemServer) SetConfigIdentificationName(ctx context.Context, in *systempb.ConfigIdentificationName) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetIdentification().GetName() != in.GetValue() {
+		if s.Cfg.GetIdentification().GetName() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -99,12 +89,10 @@ func (s *SystemServer) SetConfigIdentificationName(ctx context.Context, in *syst
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetIdentification()).(*systempb.IdentificationSetting)
+	cfg := proto.Clone(s.Cfg.GetIdentification()).(*systempb.IdentificationSetting)
 	cfg.Name = in.GetValue()
 	_, err := s.SetConfigIdentification(ctx, cfg)
 	return empty, err
@@ -113,15 +101,13 @@ func (s *SystemServer) SetConfigIdentificationName(ctx context.Context, in *syst
 func (s *SystemServer) GetConfigIdentificationDescription(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigIdentificationDescription, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigIdentificationDescription{Value: s.cfg.GetIdentification().GetDescription()}, nil
+
+	return &systempb.ConfigIdentificationDescription{Value: s.Cfg.GetIdentification().GetDescription()}, nil
 }
 
 func (s *SystemServer) SetConfigIdentificationDescription(ctx context.Context, in *systempb.ConfigIdentificationDescription) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetIdentification().GetDescription() != in.GetValue() {
+		if s.Cfg.GetIdentification().GetDescription() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -129,12 +115,10 @@ func (s *SystemServer) SetConfigIdentificationDescription(ctx context.Context, i
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetIdentification()).(*systempb.IdentificationSetting)
+	cfg := proto.Clone(s.Cfg.GetIdentification()).(*systempb.IdentificationSetting)
 	cfg.Description = in.GetValue()
 	_, err := s.SetConfigIdentification(ctx, cfg)
 	return empty, err
@@ -143,15 +127,13 @@ func (s *SystemServer) SetConfigIdentificationDescription(ctx context.Context, i
 func (s *SystemServer) GetConfigIdentificationLocation(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigIdentificationLocation, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigIdentificationLocation{Value: s.cfg.GetIdentification().GetLocation()}, nil
+
+	return &systempb.ConfigIdentificationLocation{Value: s.Cfg.GetIdentification().GetLocation()}, nil
 }
 
 func (s *SystemServer) SetConfigIdentificationLocation(ctx context.Context, in *systempb.ConfigIdentificationLocation) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetIdentification().GetLocation() != in.GetValue() {
+		if s.Cfg.GetIdentification().GetLocation() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -159,12 +141,10 @@ func (s *SystemServer) SetConfigIdentificationLocation(ctx context.Context, in *
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetIdentification()).(*systempb.IdentificationSetting)
+	cfg := proto.Clone(s.Cfg.GetIdentification()).(*systempb.IdentificationSetting)
 	cfg.Location = in.GetValue()
 	_, err := s.SetConfigIdentification(ctx, cfg)
 	return empty, err
@@ -173,15 +153,13 @@ func (s *SystemServer) SetConfigIdentificationLocation(ctx context.Context, in *
 func (s *SystemServer) GetConfigIdentificationContact(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigIdentificationContact, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigIdentificationContact{Value: s.cfg.GetIdentification().GetContact()}, nil
+
+	return &systempb.ConfigIdentificationContact{Value: s.Cfg.GetIdentification().GetContact()}, nil
 }
 
 func (s *SystemServer) SetConfigIdentificationContact(ctx context.Context, in *systempb.ConfigIdentificationContact) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetIdentification().GetContact() != in.GetValue() {
+		if s.Cfg.GetIdentification().GetContact() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -189,12 +167,10 @@ func (s *SystemServer) SetConfigIdentificationContact(ctx context.Context, in *s
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetIdentification()).(*systempb.IdentificationSetting)
+	cfg := proto.Clone(s.Cfg.GetIdentification()).(*systempb.IdentificationSetting)
 	cfg.Contact = in.GetValue()
 	_, err := s.SetConfigIdentification(ctx, cfg)
 	return empty, err
@@ -203,19 +179,15 @@ func (s *SystemServer) SetConfigIdentificationContact(ctx context.Context, in *s
 func (s *SystemServer) GetConfigOob(ctx context.Context, in *emptypb.Empty) (*systempb.OOBServicePortSetting, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg.GetOob()).(*systempb.OOBServicePortSetting), nil
+
+	return proto.Clone(s.Cfg.GetOob()).(*systempb.OOBServicePortSetting), nil
 }
 
 func (s *SystemServer) SetConfigOob(ctx context.Context, in *systempb.OOBServicePortSetting) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
@@ -225,19 +197,15 @@ func (s *SystemServer) SetConfigOob(ctx context.Context, in *systempb.OOBService
 func (s *SystemServer) GetConfigOobIPv4(ctx context.Context, in *emptypb.Empty) (*systempb.OOBServicePortNetworkSetting, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting), nil
+
+	return proto.Clone(s.Cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting), nil
 }
 
 func (s *SystemServer) SetConfigOobIPv4(ctx context.Context, in *systempb.OOBServicePortNetworkSetting) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
@@ -246,8 +214,8 @@ func (s *SystemServer) SetConfigOobIPv4(ctx context.Context, in *systempb.OOBSer
 		s.SetConfigOobIPv4Enabled(ctx, &systempb.ConfigOobIPv4Enabled{Value: in.GetEnabled()})
 		s.SetConfigOobIPv4IPAddr(ctx, &systempb.ConfigOobIPv4IPAddr{Value: in.GetIPAddr()})
 		s.SetConfigOobIPv4Netmask(ctx, &systempb.ConfigOobIPv4Netmask{Value: in.GetNetmask()})
-		if !proto.Equal(s.cfg.GetOob().GetIPv4(), in) {
-			s.cfg.Oob.IPv4 = proto.Clone(in).(*systempb.OOBServicePortNetworkSetting)
+		if !proto.Equal(s.Cfg.GetOob().GetIPv4(), in) {
+			s.Cfg.Oob.IPv4 = proto.Clone(in).(*systempb.OOBServicePortNetworkSetting)
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 	}
@@ -257,15 +225,13 @@ func (s *SystemServer) SetConfigOobIPv4(ctx context.Context, in *systempb.OOBSer
 func (s *SystemServer) GetConfigOobIPv4Enabled(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigOobIPv4Enabled, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigOobIPv4Enabled{Value: s.cfg.GetOob().GetIPv4().GetEnabled()}, nil
+
+	return &systempb.ConfigOobIPv4Enabled{Value: s.Cfg.GetOob().GetIPv4().GetEnabled()}, nil
 }
 
 func (s *SystemServer) SetConfigOobIPv4Enabled(ctx context.Context, in *systempb.ConfigOobIPv4Enabled) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetOob().GetIPv4().GetEnabled() != in.GetValue() {
+		if s.Cfg.GetOob().GetIPv4().GetEnabled() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -273,12 +239,10 @@ func (s *SystemServer) SetConfigOobIPv4Enabled(ctx context.Context, in *systempb
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
+	cfg := proto.Clone(s.Cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
 	cfg.Enabled = in.GetValue()
 	_, err := s.SetConfigOobIPv4(ctx, cfg)
 	return empty, err
@@ -287,15 +251,13 @@ func (s *SystemServer) SetConfigOobIPv4Enabled(ctx context.Context, in *systempb
 func (s *SystemServer) GetConfigOobIPv4IPAddr(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigOobIPv4IPAddr, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigOobIPv4IPAddr{Value: s.cfg.GetOob().GetIPv4().GetIPAddr()}, nil
+
+	return &systempb.ConfigOobIPv4IPAddr{Value: s.Cfg.GetOob().GetIPv4().GetIPAddr()}, nil
 }
 
 func (s *SystemServer) SetConfigOobIPv4IPAddr(ctx context.Context, in *systempb.ConfigOobIPv4IPAddr) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetOob().GetIPv4().GetIPAddr() != in.GetValue() {
+		if s.Cfg.GetOob().GetIPv4().GetIPAddr() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -303,12 +265,10 @@ func (s *SystemServer) SetConfigOobIPv4IPAddr(ctx context.Context, in *systempb.
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
+	cfg := proto.Clone(s.Cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
 	cfg.IPAddr = in.GetValue()
 	_, err := s.SetConfigOobIPv4(ctx, cfg)
 	return empty, err
@@ -317,15 +277,13 @@ func (s *SystemServer) SetConfigOobIPv4IPAddr(ctx context.Context, in *systempb.
 func (s *SystemServer) GetConfigOobIPv4Netmask(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigOobIPv4Netmask, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigOobIPv4Netmask{Value: s.cfg.GetOob().GetIPv4().GetNetmask()}, nil
+
+	return &systempb.ConfigOobIPv4Netmask{Value: s.Cfg.GetOob().GetIPv4().GetNetmask()}, nil
 }
 
 func (s *SystemServer) SetConfigOobIPv4Netmask(ctx context.Context, in *systempb.ConfigOobIPv4Netmask) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetOob().GetIPv4().GetNetmask() != in.GetValue() {
+		if s.Cfg.GetOob().GetIPv4().GetNetmask() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -333,12 +291,10 @@ func (s *SystemServer) SetConfigOobIPv4Netmask(ctx context.Context, in *systempb
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
+	cfg := proto.Clone(s.Cfg.GetOob().GetIPv4()).(*systempb.OOBServicePortNetworkSetting)
 	cfg.Netmask = in.GetValue()
 	_, err := s.SetConfigOobIPv4(ctx, cfg)
 	return empty, err
@@ -347,19 +303,15 @@ func (s *SystemServer) SetConfigOobIPv4Netmask(ctx context.Context, in *systempb
 func (s *SystemServer) GetConfigWatchdog(ctx context.Context, in *emptypb.Empty) (*systempb.WatchDogSetting, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg.GetWatchdog()).(*systempb.WatchDogSetting), nil
+
+	return proto.Clone(s.Cfg.GetWatchdog()).(*systempb.WatchDogSetting), nil
 }
 
 func (s *SystemServer) SetConfigWatchdog(ctx context.Context, in *systempb.WatchDogSetting) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
@@ -367,8 +319,8 @@ func (s *SystemServer) SetConfigWatchdog(ctx context.Context, in *systempb.Watch
 	if err == nil {
 		s.SetConfigWatchdogEnabled(ctx, &systempb.ConfigWatchdogEnabled{Value: in.GetEnabled()})
 		s.SetConfigWatchdogTriggerTime(ctx, &systempb.ConfigWatchdogTriggerTime{Value: in.GetTriggerTime()})
-		if !proto.Equal(s.cfg.GetWatchdog(), in) {
-			s.cfg.Watchdog = proto.Clone(in).(*systempb.WatchDogSetting)
+		if !proto.Equal(s.Cfg.GetWatchdog(), in) {
+			s.Cfg.Watchdog = proto.Clone(in).(*systempb.WatchDogSetting)
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 	}
@@ -379,15 +331,13 @@ func (s *SystemServer) SetConfigWatchdog(ctx context.Context, in *systempb.Watch
 func (s *SystemServer) GetConfigWatchdogEnabled(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigWatchdogEnabled, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigWatchdogEnabled{Value: s.cfg.GetWatchdog().GetEnabled()}, nil
+
+	return &systempb.ConfigWatchdogEnabled{Value: s.Cfg.GetWatchdog().GetEnabled()}, nil
 }
 
 func (s *SystemServer) SetConfigWatchdogEnabled(ctx context.Context, in *systempb.ConfigWatchdogEnabled) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetWatchdog().GetEnabled() != in.GetValue() {
+		if s.Cfg.GetWatchdog().GetEnabled() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -395,12 +345,10 @@ func (s *SystemServer) SetConfigWatchdogEnabled(ctx context.Context, in *systemp
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetWatchdog()).(*systempb.WatchDogSetting)
+	cfg := proto.Clone(s.Cfg.GetWatchdog()).(*systempb.WatchDogSetting)
 	cfg.Enabled = in.GetValue()
 	_, err := s.SetConfigWatchdog(ctx, cfg)
 	return empty, err
@@ -409,15 +357,13 @@ func (s *SystemServer) SetConfigWatchdogEnabled(ctx context.Context, in *systemp
 func (s *SystemServer) GetConfigWatchdogTriggerTime(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigWatchdogTriggerTime, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigWatchdogTriggerTime{Value: s.cfg.GetWatchdog().GetTriggerTime()}, nil
+
+	return &systempb.ConfigWatchdogTriggerTime{Value: s.Cfg.GetWatchdog().GetTriggerTime()}, nil
 }
 
 func (s *SystemServer) SetConfigWatchdogTriggerTime(ctx context.Context, in *systempb.ConfigWatchdogTriggerTime) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetLogout().GetLogoutTime() != in.GetValue() {
+		if s.Cfg.GetLogout().GetLogoutTime() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -425,12 +371,10 @@ func (s *SystemServer) SetConfigWatchdogTriggerTime(ctx context.Context, in *sys
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetWatchdog()).(*systempb.WatchDogSetting)
+	cfg := proto.Clone(s.Cfg.GetWatchdog()).(*systempb.WatchDogSetting)
 	cfg.TriggerTime = in.GetValue()
 	_, err := s.SetConfigWatchdog(ctx, cfg)
 	return empty, err
@@ -439,26 +383,22 @@ func (s *SystemServer) SetConfigWatchdogTriggerTime(ctx context.Context, in *sys
 func (s *SystemServer) GetConfigLogout(ctx context.Context, in *emptypb.Empty) (*systempb.AutoLogoutSetting, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return proto.Clone(s.cfg.GetLogout()).(*systempb.AutoLogoutSetting), nil
+
+	return proto.Clone(s.Cfg.GetLogout()).(*systempb.AutoLogoutSetting), nil
 }
 
 func (s *SystemServer) SetConfigLogout(ctx context.Context, in *systempb.AutoLogoutSetting) (*emptypb.Empty, error) {
 	if !utilsMisc.IsCtxPassLock(ctx) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		if s.cfg == nil {
-			return empty, errConfigNotReady
-		}
+
 		ctx = utilsMisc.AddCtxPassLock(ctx)
 	}
 
 	s.SetConfigLogoutEnabled(ctx, &systempb.ConfigLogoutEnabled{Value: in.GetEnabled()})
 	s.SetConfigLogoutLogoutTime(ctx, &systempb.ConfigLogoutLogoutTime{Value: in.GetLogoutTime()})
-	if !proto.Equal(s.cfg.GetLogout(), in) {
-		s.cfg.Logout = proto.Clone(in).(*systempb.AutoLogoutSetting)
+	if !proto.Equal(s.Cfg.GetLogout(), in) {
+		s.Cfg.Logout = proto.Clone(in).(*systempb.AutoLogoutSetting)
 		defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 	}
 
@@ -468,15 +408,13 @@ func (s *SystemServer) SetConfigLogout(ctx context.Context, in *systempb.AutoLog
 func (s *SystemServer) GetConfigLogoutEnabled(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigLogoutEnabled, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigLogoutEnabled{Value: s.cfg.GetLogout().GetEnabled()}, nil
+
+	return &systempb.ConfigLogoutEnabled{Value: s.Cfg.GetLogout().GetEnabled()}, nil
 }
 
 func (s *SystemServer) SetConfigLogoutEnabled(ctx context.Context, in *systempb.ConfigLogoutEnabled) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetLogout().GetEnabled() != in.GetValue() {
+		if s.Cfg.GetLogout().GetEnabled() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -484,12 +422,10 @@ func (s *SystemServer) SetConfigLogoutEnabled(ctx context.Context, in *systempb.
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetLogout()).(*systempb.AutoLogoutSetting)
+	cfg := proto.Clone(s.Cfg.GetLogout()).(*systempb.AutoLogoutSetting)
 	cfg.Enabled = in.GetValue()
 	_, err := s.SetConfigLogout(ctx, cfg)
 	return empty, err
@@ -498,15 +434,13 @@ func (s *SystemServer) SetConfigLogoutEnabled(ctx context.Context, in *systempb.
 func (s *SystemServer) GetConfigLogoutLogoutTime(ctx context.Context, in *emptypb.Empty) (*systempb.ConfigLogoutLogoutTime, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	if s.cfg == nil {
-		return nil, errConfigNotReady
-	}
-	return &systempb.ConfigLogoutLogoutTime{Value: s.cfg.GetLogout().GetLogoutTime()}, nil
+
+	return &systempb.ConfigLogoutLogoutTime{Value: s.Cfg.GetLogout().GetLogoutTime()}, nil
 }
 
 func (s *SystemServer) SetConfigLogoutLogoutTime(ctx context.Context, in *systempb.ConfigLogoutLogoutTime) (*emptypb.Empty, error) {
 	if utilsMisc.IsCtxPassLock(ctx) {
-		if s.cfg.GetLogout().GetLogoutTime() != in.GetValue() {
+		if s.Cfg.GetLogout().GetLogoutTime() != in.GetValue() {
 			defer s.sendConfigChange(in, eventpb.ConfigADUTypeOptions_CONFIG_ADU_TYPE_CONFIG_UPDATE)
 		}
 		return empty, nil
@@ -514,12 +448,10 @@ func (s *SystemServer) SetConfigLogoutLogoutTime(ctx context.Context, in *system
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if s.cfg == nil {
-		return empty, errConfigNotReady
-	}
+
 	ctx = utilsMisc.AddCtxPassLock(ctx)
 
-	cfg := proto.Clone(s.cfg.GetLogout()).(*systempb.AutoLogoutSetting)
+	cfg := proto.Clone(s.Cfg.GetLogout()).(*systempb.AutoLogoutSetting)
 	cfg.LogoutTime = in.GetValue()
 	_, err := s.SetConfigLogout(ctx, cfg)
 	return empty, err

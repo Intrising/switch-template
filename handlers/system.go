@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Intrising/intri-core/hal"
@@ -32,8 +33,13 @@ type SystemHandler struct {
 	deviceClient *hal.DeviceClient
 
 	cfg *systempb.Config
-	srv *services.SystemServer
+	srv *SystemProtectServiceServer
 	cb  *engineSystem.CallBack
+}
+
+type SystemProtectServiceServer struct {
+	systempb.ConfigServiceServer
+	systempb.RunServiceServer
 }
 
 func (c *SystemHandler) registerCallBack() {
@@ -74,8 +80,7 @@ func (c *SystemHandler) getDefaultConfig() *systempb.Config {
 }
 
 func (c *SystemHandler) saveConfig(in *systempb.Config) {
-	cfg := proto.Clone(in).(*systempb.Config)
-	c.configClient.SaveSavedConfig(cfg)
+	c.configClient.SaveSavedConfig(in)
 }
 
 func (c *SystemHandler) saveDefaultConfig(in *systempb.Config) {
@@ -108,14 +113,20 @@ func (c *SystemHandler) getConfig() {
 
 func (c *SystemHandler) initConfig() {
 	if c.initReady {
-		// utilsLog.Info("init conifg ready")
 		return
 	}
 	c.initReady = true
 
 	c.getConfig()
 	engineSystem.Init(c.cb, c.cfg)
-	c.srv.InitConfig(c.cfg)
+
+	c.srv.ConfigServiceServer = &services.SystemServer{
+		EventClient: c.eventClient,
+		Cfg:         proto.Clone(c.cfg).(*systempb.Config),
+	}
+	c.srv.RunServiceServer = &services.SystemServer{
+		EventClient: c.eventClient,
+	}
 }
 
 func (c *SystemHandler) listenEvent() {
@@ -129,10 +140,13 @@ func (c *SystemHandler) listenEvent() {
 		utilsLog.Info("evt = ", evt)
 		switch evt.GetType() {
 		case eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE:
+			c.registerCallBack()
 			c.initConfig()
+			c.sendReadyEvent()
 		case eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG:
 			if evt.GetConfig().GetActionOption() == eventpb.ConfigActionTypeOptions_CONFIG_ACTION_TYPE_CONFIG_SAVE {
-				c.saveConfig(c.cfg)
+				cfg, _ := c.srv.GetConfig(c.ctx, &emptypb.Empty{})
+				c.saveConfig(cfg)
 			}
 		}
 	}
@@ -174,8 +188,8 @@ func (c *SystemHandler) initClient() {
 	c.deviceClient = hal.DeviceClientInit(c.ctx, c.service)
 
 	c.configClient = &hal.ConfigClient{
-		SavedPath:   fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigSaved(), c.GetRegisteredMainService().String()),
-		DefaultPath: fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigDefault(), c.GetRegisteredMainService().String()),
+		SavedPath:   fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigSaved(), c.service.String()),
+		DefaultPath: fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigDefault(), c.service.String()),
 	}
 }
 
@@ -185,11 +199,10 @@ func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {
 	log.Println("Init : c.service = ", c.service)
 
 	c.initClient()
-	c.registerCallBack()
 
-	c.srv = &services.SystemServer{
-		EventClient: c.eventClient,
-	}
+	c.srv = &SystemProtectServiceServer{}
+	c.srv.ConfigServiceServer = systempb.UnimplementedConfigServiceServer{}
+	c.srv.RunServiceServer = systempb.UnimplementedRunServiceServer{}
 
 	systempb.RegisterConfigServiceServer(grpcSrvConn, c.srv)
 	systempb.RegisterRunServiceServer(grpcSrvConn, c.srv)
