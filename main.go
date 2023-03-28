@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Intrising/intri-core/handlers"
 	utilsLog "github.com/Intrising/intri-utils/log"
+	"github.com/Intrising/switch-template/handlers"
 )
 
 func main() {

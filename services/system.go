@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Intrising/intri-core/hal"
 	systempb "github.com/Intrising/intri-type/core/system"
 	eventpb "github.com/Intrising/intri-type/event"
 	utilsLog "github.com/Intrising/intri-utils/log"
+	"github.com/Intrising/switch-template/hal"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"

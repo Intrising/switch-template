@@ -13,7 +13,7 @@ GO_CC                 = CC=$(CC)
 GO_OPTS               = CGO_ENABLED=1 GOARCH=arm64 GOOS=linux
 # GO_OPTS               = GOARCH=arm64 GOARM=8 GOOS=linux
 
-all: intri-core intri-core-test
+all: switch-template switch-template-test
 
 tag:
 	@git describe --tags --abbrev=0 | awk -F. '{OFS="."; $$NF+=1; print $$0}' | xargs -t -I % sh -c 'git tag %'
@@ -39,7 +39,7 @@ mod-tidy:
 
 clean:
 	@printf "[_] Clear build files\r"
-	@rm -f ./intri-core*
+	@rm -f ./switch-template*
 	@printf "[v] Clear build files\n"
 
 build: main.go clean hide mod-tidy
@@ -47,13 +47,13 @@ build: main.go clean hide mod-tidy
 	@$(GO_OPTS) go build -o $(NowDirName) $<
 	@printf "[v] Building binary\n"
 
-intri-core: main.go ./*/*.go
+switch-template: main.go ./*/*.go
 	@printf "[_] Building binary\r"
 	$(GO_CC) $(GO_OPTS) go build -o $@ $<
 	$(STRIP) $@
 	@printf "[v] Building binary\n"
 
-intri-core-test:${PWD}/testing/
+switch-template-test:${PWD}/testing/
 	@printf "[_] Building binary\r"
 	$(GO_CC) $(GO_OPTS) go test $< -c  -v -o $@  
 	$(STRIP) $@

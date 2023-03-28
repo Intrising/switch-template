@@ -11,10 +11,10 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/Intrising/intri-core/hal"
-	"github.com/Intrising/intri-core/services"
+	"github.com/Intrising/switch-template/hal"
+	"github.com/Intrising/switch-template/services"
 
-	engineSystem "github.com/Intrising/intri-core/engine/system"
+	engineSystem "github.com/Intrising/switch-template/engine/system"
 
 	utilsLog "github.com/Intrising/intri-utils/log"
 

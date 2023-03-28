@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	system "github.com/Intrising/intri-core/engine/system"
+	system "github.com/Intrising/switch-template/engine/system"
 
 	systempb "github.com/Intrising/intri-type/core/system"
 
