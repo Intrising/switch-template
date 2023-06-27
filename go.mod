@@ -5,8 +5,9 @@ go 1.19
 // replace github.com/Intrising/intri-utils => /home/khkh/working/switch-os5/intri-utils
 
 require (
-	github.com/Intrising/intri-type v0.0.0-20230328080657-50f91d619f8a
-	github.com/Intrising/intri-utils v0.0.0-20230323172530-8dbd8d35a332
+	github.com/Intrising/intri-type v0.0.0-20230627043427-c1ccbd4c7634
+	github.com/Intrising/intri-utils v0.0.0-20230627054835-be43db20874b
+	golang.org/x/sys v0.2.0
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 )
@@ -21,7 +22,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0 // indirect
 	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20221130183247-a2ec334bae6f // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

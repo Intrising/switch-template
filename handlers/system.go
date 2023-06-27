@@ -43,11 +43,17 @@ type SystemProtectServiceServer struct {
 }
 
 func (c *SystemHandler) registerCallBack() {
+	c.configClient = hal.ConfigClientInit(c.ctx, c.service)
+	savedPath := fmt.Sprintf("%s%s.yml", c.deviceClient.GetPath().GetConfigSaved(), c.service.String())
+	defaultPath := fmt.Sprintf("%s%s.yml", c.deviceClient.GetPath().GetConfigDefault(), c.service.String())
+	c.configClient.SetPath(savedPath, defaultPath)
+
 	c.cb = &engineSystem.CallBack{
 		Ctx:          c.ctx,
 		EventClient:  c.eventClient,
 		DeviceClient: c.deviceClient,
-		// HardwareClient: hal.HardwareClientInit(c.ctx, c.service),
+		TimeClient:   hal.TimeClientInit(c.ctx, c.service),
+		CLIClient:    hal.CLIClientInit(c.ctx, c.service),
 	}
 }
 
@@ -140,13 +146,27 @@ func (c *SystemHandler) listenEvent() {
 		utilsLog.Info("evt = ", evt)
 		switch evt.GetType() {
 		case eventpb.InternalTypeOptions_INTERNAL_TYPE_SERVICE:
-			c.registerCallBack()
-			c.initConfig()
-			c.sendReadyEvent()
+			if evt.GetInit().GetServiceType() == commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_GATEWAY {
+				if evt.GetInit().GetAction() == eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START {
+					engineSystem.ExecuteSystemReadyEvent()
+				}
+			} else if evt.GetInit().GetServiceType() == commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CLI {
+				if evt.GetInit().GetAction() == eventpb.ServiceActionTypeOptions_SERVICE_ACTION_TYPE_START {
+					engineSystem.SetAutoLogoutTime(c.cfg.GetLogout().GetEnabled(), c.cfg.GetLogout().GetLogoutTime())
+				}
+			} else {
+				c.registerCallBack()
+				c.initConfig()
+				c.sendReadyEvent()
+			}
 		case eventpb.InternalTypeOptions_INTERNAL_TYPE_CONFIG:
 			if evt.GetConfig().GetActionOption() == eventpb.ConfigActionTypeOptions_CONFIG_ACTION_TYPE_CONFIG_SAVE {
 				cfg, _ := c.srv.GetConfig(c.ctx, &emptypb.Empty{})
 				c.saveConfig(cfg)
+			}
+		case eventpb.InternalTypeOptions_INTERNAL_TYPE_BUTTON:
+			if evt.GetLoggingType() == eventpb.LoggingTypeOptions_LOGGING_TYPE_NONE { //NONE means hardware event
+				engineSystem.HandlerResetButton(evt.GetButton())
 			}
 		}
 	}
@@ -186,11 +206,6 @@ func (c *SystemHandler) initClient() {
 	required := []commonpb.ServicesEnumTypeOptions{}
 	c.eventClient = hal.EventClientInit(c.ctx, c.service, unions, required)
 	c.deviceClient = hal.DeviceClientInit(c.ctx, c.service)
-
-	c.configClient = &hal.ConfigClient{
-		SavedPath:   fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigSaved(), c.service.String()),
-		DefaultPath: fmt.Sprintf("%s/%s.yml", c.deviceClient.GetPath().GetConfigDefault(), c.service.String()),
-	}
 }
 
 func (c *SystemHandler) Init(ctx context.Context, grpcSrvConn *grpc.Server) {

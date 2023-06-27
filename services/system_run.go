@@ -13,3 +13,7 @@ import (
 func (s *SystemServer) GetInfo(ctx context.Context, in *emptypb.Empty) (*systempb.Info, error) {
 	return system.GetInfo(), nil
 }
+
+func (s *SystemServer) GetOOBStatus(ctx context.Context, in *emptypb.Empty) (*systempb.OOBServiceStatus, error) {
+	return system.GetOOBIPv4Status()
+}

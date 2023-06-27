@@ -3,11 +3,12 @@ package system
 import (
 	"context"
 
-	// configpb "github.com/Intrising/intri-type/config"
+	commonpb "github.com/Intrising/intri-type/common"
+	configpb "github.com/Intrising/intri-type/config"
 	devicepb "github.com/Intrising/intri-type/device"
-	// errorpb "github.com/Intrising/intri-type/error"
 	eventpb "github.com/Intrising/intri-type/event"
-	// "google.golang.org/protobuf/types/known/emptypb"
+
+	timepb "github.com/Intrising/intri-type/core/time"
 )
 
 type CallBack struct {
@@ -29,7 +30,19 @@ type CallBack struct {
 
 	// hardware
 	HardwareClient interface {
-		// GetResetButtonStatus() (*commonpb.BoolValue, error)
+		GetResetButtonStatus() (*commonpb.BoolValue, error)
 		// SetSystemLED(*hwpb.LEDType) (*emptypb.Empty, error)
+	}
+
+	ConfigClient interface {
+		RestoreDefault(in configpb.FactoryDefaultModeTypeOptions) error
+	}
+
+	TimeClient interface {
+		GetTimeDate() *timepb.DateTime
+	}
+
+	CLIClient interface {
+		UpdateAutoLogout(bool, int32)
 	}
 }

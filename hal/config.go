@@ -1,13 +1,40 @@
 package hal
 
 import (
+	"context"
+
+	commonpb "github.com/Intrising/intri-type/common"
+	configpb "github.com/Intrising/intri-type/config"
+
 	utilsMisc "github.com/Intrising/intri-utils/misc"
+	utilsRpc "github.com/Intrising/intri-utils/rpc"
 	"google.golang.org/protobuf/proto"
 )
 
 type ConfigClient struct {
 	SavedPath   string
 	DefaultPath string
+
+	Ctx    context.Context
+	Client configpb.RunServiceClient
+}
+
+func ConfigClientInit(ctx context.Context, service commonpb.ServicesEnumTypeOptions) *ConfigClient {
+	client := utilsRpc.NewClientConn(ctx, service, commonpb.ServicesEnumTypeOptions_SERVICES_ENUM_TYPE_CONFIG)
+	return &ConfigClient{
+		Ctx:    ctx,
+		Client: configpb.NewRunServiceClient(client.GetGrpcClient()),
+	}
+}
+
+func (c *ConfigClient) RestoreDefault(in configpb.FactoryDefaultModeTypeOptions) error {
+	_, err := c.Client.RunRestoreDefaultConfig(c.Ctx, &configpb.RestoreDefaultRequest{Type: in})
+	return err
+}
+
+func (c *ConfigClient) SetPath(savedPath, defaultPath string) {
+	c.SavedPath = savedPath
+	c.DefaultPath = defaultPath
 }
 
 func (c *ConfigClient) GetSavedConfigContent() (string, error) {
